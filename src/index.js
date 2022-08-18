@@ -1,44 +1,94 @@
-// write your code here
+// State
+let ramens = [];
 
-// Fetch Data
-const fetchRamen = () => {
-    return fetch('http://localhost:3000/ramens')
-    .then((res) => res.json())
-    .then((ramen) => renderRamens(ramen))
-}
+const ramenMenu = document.getElementById('ramen-menu');
 
-// Render ramen images
-const renderRamens = (ramen) => {
-    ramen.forEach(ramens => {
-        const container = document.getElementById('ramen-menu')
-        const ramenImage = document.createElement('img')
-        ramenImage.src = ramens.image
-        ramenImage.className = "ramen-images"
-        console.log(ramens);
-        container.appendChild(ramenImage)
+    fetch('http://localhost:3000/ramens')
+    .then(res => res.json())
+    .then(data => {
+        ramens = data
+        selectedRamenId = data[0].id
+        resetMenu();
+    });
+
+const resetMenu = () => {
+    ramens.forEach(ramen => {
+        addRamenMenu(ramen)
     });
 };
 
-// Handle ramen image click event from #ramen-menu and display that inside of #ramen-detail
-    document.addEventListener('click', (ramens) => {
-        const ramenDetailDiv = document.getElementById('ramen-detail');
-        const imageContainer = document.getElementsByClassName('ramen-images');
-        const divImage = document.createElement('img');
-        divImage.src = ramens.image;
-        imageContainer.appendChild(divImage);
-        ramenDetailDiv.appendChild(imageContainer);
+const addRamenMenu = (ramen) => {
+    const ramenMenuImg = document.createElement('img')
+    ramenMenuImg.src = ramen.image
+    ramenMenuImg.dataset.id = ramen.id
+    ramenMenu.append(ramenMenuImg)
+};
+
+const detailImg = document.querySelector('#ramen-detail img.detail-image');
+const detailName = document.querySelector('#ramen-detail>.name');
+const detailRestaurant = document.querySelector('#ramen-detail>.restaurant');
+const ratingDisplay = document.querySelector('#rating-display');
+const commentDisplay = document.querySelector('#comment-display');
+
+ramenMenu.addEventListener('click', (e) => {
+    if(e.target.tagName === 'IMG'){
+        console.log(selectedRamenId)
+        selectedRamenId = e.target.dataset.id
+        setRamenDetailsById(selectedRamenId)
+    }
 });
 
-// const ramenTarget = () => {
-//     const ramenDetailDiv = document.getElementById('ramen-detail')
-//     const imageContainer = document.getElementsByClassName('ramen-images')
-//     const divImage = document.createElement('img')
-//     divImage.src = ramens.image
-//     imageContainer.appendChild(divImage)
-//     ramenDetailDiv.appendChild(imageContainer)
-// }
+const setRamenDetailsById = (id) => {
+    const selected = ramens.find(r => r.id === parseInt(id));
+    console.log(selected);
+
+    detailImg.src = selected.image
+    detailName.textContent = selected.name
+    detailRestaurant.textContent = selected.restaurant
+    ratingDisplay.textContent = selected.rating
+    commentDisplay.textContent = selected.comment
+}
+
+// HTML Elements
+
+const newRamenForm = document.querySelector('#new-ramen')
+const newRamenNameInput = document.querySelector('#new-ramen>#new-name')
+const newRamenRestaurantInput = document.querySelector('#new-ramen>#new-restaurant')
+const newRamenImageInput = document.querySelector('#new-ramen>#new-image')
+const newRamenRatingInput = document.querySelector('#new-ramen>#new-rating')
+const newRamenCommentInput = document.querySelector('#new-ramen>#new-comment')
 
 
-// Function invocations
-fetchRamen();
-renderRamens();
+const listenNewRamenForm = () => {
+    newRamenForm.addEventListener('submit', (e) => {
+        e.preventDefault()
+        let newRamen = {
+            name: newRamenNameInput.value,
+            restaurant: newRamenRestaurantInput.value,
+            image: newRamenImageInput.value, 
+            rating: newRamenRatingInput.value,
+            comment: newRamenCommentInput.value,
+        }
+        postRamen(newRamen);
+    })
+}
+
+listenNewRamenForm();
+
+const postRamen = (ramenData) => {
+    fetch('http://localhost:3000/ramens', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ramenData),
+    })
+        .then((res) => res.json)
+        .then((data) => {
+            ramens.push(data);
+            addRamenMenu(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error)
+        });
+};
